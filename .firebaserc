@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "useroragmaticinfeance"
-  }
+    "default": "userpragmaticinferance"
+  },
+  "targets": {},
+  "etags": {}
 }
