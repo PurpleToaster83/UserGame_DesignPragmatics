@@ -40,6 +40,9 @@ experimentApp.controller('ExperimentController',
         $scope.player_y = NaN;
         $scope.lastButton = NaN;
 
+        $scope.inventory = [];
+        $scope.endMap = false;
+
         $scope.instructions = [
             {
                 text: "Test Instruction #1"
@@ -65,18 +68,18 @@ experimentApp.controller('ExperimentController',
                     { row: 3, col: 6 },
                 ],
                 "doorSquares": [
-                    { row: 1, col: 4 },
-                    { row: 5, col: 4 }
+                    { row: 1, col: 4, doorId: 0, unlockedBy: 0 },
+                    { row: 5, col: 4, doorId: 1, unlockedBy: 1 }
                 ],
                 "fruit": [
-                    { row: 0, col: 6 },
-                    { row: 6, col: 6 }
+                    { row: 0, col: 6, fruitId: 0},
+                    { row: 6, col: 6, fruitId: 1}
                 ],
                 "keySquares": [
-                    { row: 0, col: 0}
+                    { row: 0, col: 0, keyId: 0},
+                    { row: 0, col: 2, keyId: 1}
                 ],
-                "player": { row: 3, col: 1 },
-                "ground_truth": ["Key A unlocks Door 1"]
+                "player": { row: 3, col: 1 }
             }
         ]
 
@@ -110,34 +113,23 @@ experimentApp.controller('ExperimentController',
                     $scope.isDoor = $scope.active_stim.doorSquares.some(door => door.row === row && door.col === col);
                     if ($scope.isDoor) {
                         $scope.cell.classList.add('door');
-                        $scope.active_stim.doorSquares.some((d, index) => {
-                            if (d.row === row && d.col === col) {
-                                $scope.png_id = $scope.door_img_url[index];
-                                return;
-                            }
-                        });
-                        $scope.blah = $scope.png_id;
-                        $scope.cell.style.backgroundImage = `url('${$scope.png_id}')`;
+                        const door = $scope.active_stim.doorSquares.find(d => d.row === row && d.col === col)
+                        $scope.cell.style.backgroundImage = `url('${$scope.door_img_url[door.doorId]}')`;
                     }
 
                     // Check if this cell is a fruit
                     $scope.isFruit = $scope.active_stim.fruit.some(fruit => fruit.row === row && fruit.col === col);
                     if ($scope.isFruit) {
                         $scope.cell.classList.add('fruit');
-                        $scope.active_stim.fruit.some((f, index) => {
-                            if (f.row === row && f.col === col) {
-                                $scope.png_id = $scope.fruit_img_url[index];
-                                return;
-                            }
-                        });
-                        $scope.cell.style.backgroundImage = `url('${$scope.png_id}')`;
+                        const fruit = $scope.active_stim.fruit.find(f => f.row === row && f.col === col)
+                        $scope.cell.style.backgroundImage = `url('${$scope.fruit_img_url[fruit.fruitId]}')`;
                     }
 
                     $scope.isKey = $scope.active_stim.keySquares.some(key => key.row === row && key.col === col);
                     if ($scope.isKey) {
                         $scope.cell.classList.add('key-in-grid');
-                        const keyIndex = $scope.active_stim.keySquares.findIndex(k => k.row === row && k.col === col);
-                        $scope.cell.style.backgroundImage = `url('${$scope.key_img_url[keyIndex]}'), url('images/tray.png')`;
+                        const key = $scope.active_stim.keySquares.find(k => k.row === row && k.col === col);
+                        $scope.cell.style.backgroundImage = `url('${$scope.key_img_url[key.keyId]}'), url('images/tray.png')`;
                     }
 
                     // Check if this cell is a player
@@ -196,6 +188,29 @@ experimentApp.controller('ExperimentController',
                     $scope.active_stim.player.col += 1;
                 }
 
+                const newR = $scope.active_stim.player.row;
+                const newC = $scope.active_stim.player.col;
+                const keyIndex = $scope.active_stim.keySquares.findIndex(k => k.row === newR && k.col === newC);
+                if (keyIndex !== -1) {
+                    const keyId = $scope.active_stim.keySquares[keyIndex].keyId;
+                    $scope.active_stim.keySquares.splice(keyIndex, 1); // remove the key
+                    $scope.inventory.push({type: 'key', id: keyId});
+                }
+
+                const doorIndex = $scope.active_stim.doorSquares.findIndex(d => d.row === newR && d.col === newC);
+                if (doorIndex !== -1) {
+                    const doorId = $scope.active_stim.doorSquares[doorIndex].doorId;
+                    $scope.active_stim.doorSquares.splice(doorIndex, 1); // remove the door
+                }
+
+                const fruitIndex = $scope.active_stim.fruit.findIndex(f => f.row === newR && f.col === newC);
+                if (fruitIndex !== -1) {
+                    const fruitId = $scope.active_stim.fruit[fruitIndex].fruitId;
+                    $scope.active_stim.fruit.splice(fruitIndex, 1); // remove the fruit
+                    $scope.inventory.push({ type: 'fruit', id: fruitId });
+                    $scope.endMap = true;
+                }
+
                 $scope.player_x = $scope.active_stim.player.row;
                 $scope.player_y = $scope.active_stim.player.col;
             });
@@ -204,14 +219,21 @@ experimentApp.controller('ExperimentController',
 
         $scope.isPassable = function(row, col) {
             const isWall = $scope.active_stim.wallSquares.some(w => w.row === row && w.col === col);
-            const isDoor = $scope.active_stim.doorSquares.some(d => d.row === row && d.col === col);
-            return !isWall && !isDoor;
+            const door = $scope.active_stim.doorSquares.find(d => d.row === row && d.col === col);
+
+            if (isWall) return false;
+            if (door) {
+                return $scope.inventory.some(item => item.type === 'key' && item.id === door.unlockedBy);
+            }
+            return true;
         };
 
-        //TODO: if in tray, person show, if key there take key, if have key can go through doors
-        //TODO: integrate with actual game
+        $scope.getInventoryImg = function(item) {
+            if (item.type === 'key') return $scope.key_img_url[item.id];
+            if (item.type === 'fruit') return $scope.fruit_img_url[item.id];
+            return '';
+        };
 
         $scope.initGridContainer();
-
     }
 )

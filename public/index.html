@@ -23,9 +23,14 @@
 
 <body ng-controller="ExperimentController">
     <div class="grid-container" id="grid" ng-init="initGridContainer()"></div>
-    <h1>Row: {{player_x}}</h1>
-    <h1>Column: {{player_y}}</h1>
-    <h1>Last Button: {{lastButton}}</h1>
+    <br>
+    <br>
+    <div class="inventory">
+        <span>Inventory: </span>
+        <img ng-repeat="item in inventory" 
+            ng-src="{{getInventoryImg(item)}}" 
+            class="inventory-item">
+    </div>
 </body>
 
 </html>
