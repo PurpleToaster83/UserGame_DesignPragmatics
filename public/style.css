@@ -260,20 +260,6 @@ h1 {
   background-size: contain;
 }
 
-.grid-cell.target.occupied {
-    background-image: url("images/tray.png");
-    background-size: contain;
-}
-
-.grid-cell.drop-target {
-    background: #90EE90;
-    border-color: #32CD32;
-    box-shadow: 0 0 15px rgba(50, 205, 50, 0.7);
-    transform: scale(1.05);
-    background-image: url("images/tray.png");
-    background-size: contain;
-}
-
 .sidebar {
     background: rgb(255, 255, 255);
     padding: 30px;
