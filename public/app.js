@@ -414,10 +414,9 @@ experimentApp.controller('ExperimentController',
     };
         
     $scope.stimuli_sets = [
-      //   [0, 4, 8, 9, 13, 14, 15, 19, 23, 25],
-      //   [1, 5, 6, 11, 16, 20, 21, 26, 28, 29],
-      //   [2, 3, 7, 10, 12, 17, 18, 22, 24, 27]
-      [0, 1, 2, 3]
+        [0, 4, 8, 9, 13, 14, 15, 19, 23, 25],
+        [1, 5, 6, 11, 16, 20, 21, 26, 28, 29],
+        [2, 3, 7, 10, 12, 17, 18, 22, 24, 27]
     ]
 
     $scope.instructions = [
@@ -443,8 +442,7 @@ experimentApp.controller('ExperimentController',
               who knows which keys unlock which doors, <strong>has arranged the keys strategically amoungst the purple trays.</strong>
               <br> <br>
               In this experiment, you are playing the role of the Adventurer.
-              We will show you the map after the game designer has rearranged the keys, and ask you to match which key(s) corresponds to what door(s).
-              Keys have the potential to unlock one or multiple doors but can only be used once for each chamber map.
+              We will show you the map after the game designer has rearranged the keys, and ask you to collect the key that corresponds to the door guarding the desired fruit.
               <br> <br>
 
               Press the <strong>Next</strong> button to continue.
@@ -452,11 +450,17 @@ experimentApp.controller('ExperimentController',
         show_questions: false
       },
       {
-        text: `At each trial, we will show you the key placement and ask you questions about the <strong>which</strong> door each key unlocks.<br>
+        text: `At each trial, you will be shown a map that has keys and doors placed in different positions. Your goal is to determine what key unlocks which door in order to procuure the fruits.<br>
               <br>
-              Rate <strong>100</strong> if you're <strong>certain</strong> that the key <strong>unlocks</strong> a <strong>door</strong>.<br>
-              Rate <strong>50</strong> if you think there's an <strong>even, 50-50 chance</strong> whether the does or does not <strong>unlock</strong> a <strong>door</strong>.<br>
-              Rate <strong>0</strong> if you're <strong>certain</strong> that the key <strong>does not unlock</strong> a <strong>door</strong>.<br>
+              <u>Game Controls</u><br>
+              Use the <strong>Up-Arrow Key</strong> to move your character to the tile <strong>above</strong> it.<br>
+              Use the <strong>Down-Arrow Key</strong> to move your character to the tile <strong>below</strong> it.<br>
+              Use the <strong>Left-Arrow Key</strong> to move your character to the tile <strong>left</strong> of it.<br>
+              Use the <strong>Right-Arrow Key</strong> to move your character to the tile <strong>right</strong> of it.<br>
+              <br>
+              <li>If your character moves onto the same tile as a key, you will pick up the key and it will be added to your inventory that is displayed below the map grid. You can then use the keys in your inventory to unlock specific doors.</li><br>
+              <li>If your character attempts to move onto the same tile as a door, you will either be able or unable to pass depending on if you have the key that unlocks that specific door in your inventory.</li><br>
+              <li>Once you have collected a fruit, you will no longer be able to move and should proceed to the next map.</li><br>
               <br>
               Press <strong>Next</strong> to watch what happens.
               `,
@@ -495,18 +499,6 @@ experimentApp.controller('ExperimentController',
       },
       {
         text: `As mentioned, you should assume that the room designer wants you to succeed as both of you will benefit if you answer correctly. The reward scheme is as follows:
-
-              <br><br>
-              For each question, Your rating will be compared to the answer key and rewards will be calibrated by considering the difference.
-
-              <br><br>
-
-              If the key does not unlock a door and you answer 100, you receive -50 points. If you answer 0, you receive 50 points. If you answer 50, you receive 0 points.
-              <br><br>
-              Similarly, if the key unlocks a door and you answer 100, you receive 50 points. If you answer 0, you receive -50 points. If you answer 50, you receive 0 points.
-
-              <br><br>
-              You accumulate the points you receive over all the maps you play and will be paid a bonus at the end of the experiment, at a rate of 1 USD per 1000 points.
               `
       },
       {
@@ -666,7 +658,7 @@ experimentApp.controller('ExperimentController',
 
     //TODO: put in all of the stimuli
     $scope.stimuli = [
-      {
+{
         "name": "01_1",
         "gridSize": [7, 7],
         "trays": [
@@ -675,13 +667,8 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
           { row: 1, col: 4, unlockedBy: 0 },
@@ -694,7 +681,8 @@ experimentApp.controller('ExperimentController',
         "keySquares": [
           { row: 0, col: 2, keyId: 0 }
         ],
-        "player": { row: 3, col: 1 }
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 1"]
       },
       {
         "name": "01_2",
@@ -705,13 +693,8 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
           { row: 1, col: 4 },
@@ -724,7 +707,8 @@ experimentApp.controller('ExperimentController',
         "keySquares": [
           { row: 3, col: 3, keyId: 0 }
         ],
-        "player": { row: 3, col: 1 }
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 2"]
       },
       {
         "name": "01_3",
@@ -735,27 +719,23 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
           { row: 1, col: 4, unlockedBy: 0 },
           { row: 5, col: 4, unlockedBy: 1 }
         ],
         "fruit": [
-          { row: 0, col: 6 },
-          { row: 6, col: 6 }
+          { row: 0, col: 6, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
         ],
-        "player": { row: 3, col: 1 },
         "keySquares": [
           { row: 0, col: 2, keyId: 0 },
           { row: 3, col: 3, keyId: 1 }
-        ]
+        ],
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
       },
       {
         "name": "02_1",
@@ -766,13 +746,8 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
           { row: 1, col: 4, unlockedBy: 0 },
@@ -785,7 +760,8 @@ experimentApp.controller('ExperimentController',
         "keySquares": [
           { row: 3, col: 3, keyId: 0 }
         ],
-        "player": { row: 3, col: 1 }
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 1"]
       },
       {
         "name": "02_2",
@@ -796,13 +772,8 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
           { row: 1, col: 4 },
@@ -813,9 +784,10 @@ experimentApp.controller('ExperimentController',
           { row: 6, col: 6, fruitId: 1 }
         ],
         "keySquares": [
-          { row: 6, col: 2, keyId: 0 },
+          { row: 6, col: 2, keyId: 0 }
         ],
-        "player": { row: 3, col: 1 }
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 2"]
       },
       {
         "name": "02_3",
@@ -826,27 +798,706 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3 }
         ],
         "wallSquares": [
-          { row: 0, col: 4 },
-          { row: 2, col: 4 },
-          { row: 3, col: 4 },
-          { row: 4, col: 4 },
-          { row: 6, col: 4 },
-          { row: 3, col: 5 },
-          { row: 3, col: 6 },
+          { row: 0, col: 4 }, { row: 2, col: 4 }, { row: 3, col: 4 },
+          { row: 4, col: 4 }, { row: 6, col: 4 }, { row: 3, col: 5 }, { row: 3, col: 6 },
         ],
         "doorSquares": [
-          { row: 1, col: 4, unlockedBy: 0 },
-          { row: 5, col: 4, unlockedBy: 1 }
+          { row: 1, col: 4, unlockedBy: 1 },
+          { row: 5, col: 4, unlockedBy: 0 }
         ],
         "fruit": [
           { row: 0, col: 6, fruitId: 0 },
           { row: 6, col: 6, fruitId: 1 }
         ],
         "keySquares": [
-          { row: 6, col: 2, keyId: 1 },
-          { row: 3, col: 3, keyId: 0 }
+          { row: 3, col: 3, keyId: 0 },
+          { row: 6, col: 2, keyId: 1 }
         ],
-        "player": { row: 3, col: 1 }
+        "player": { row: 3, col: 1 },
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+      },
+      {
+        "name": "03_1",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 2, col: 5, unlockedBy: 0 },
+          { row: 6, col: 4 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 4, col: 6, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "03_2",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 2, col: 5 },
+          { row: 6, col: 4, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 7, col: 1, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "03_3",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 2, col: 5, unlockedBy: 1 },
+          { row: 6, col: 4, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 0, keyId: 0 },
+          { row: 7, col: 1, keyId: 1 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+      },
+      {
+        "name": "04_1",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2, unlockedBy: 0 },
+          { row: 6, col: 4 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 0, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "04_2",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2 },
+          { row: 6, col: 4, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 7, col: 1, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "04_3",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 7, col: 1 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2, unlockedBy: 0 },
+          { row: 6, col: 4, unlockedBy: 1 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 },
+          { row: 6, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 0, keyId: 0 },
+          { row: 7, col: 1, keyId: 1 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+      },
+      {
+        "name": "05_1",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 6, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 0 }, { row: 7, col: 1 }, { row: 7, col: 2 }, { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2, unlockedBy: 0 },
+          { row: 2, col: 5 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 }
+        ],
+        "keySquares": [
+          { row: 1, col: 0, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "05_2",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 6, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 0 }, { row: 7, col: 1 }, { row: 7, col: 2 }, { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2 },
+          { row: 2, col: 5, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 }
+        ],
+        "keySquares": [
+          { row: 4, col: 6, keyId: 0 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "05_3",
+        "gridSize": [8, 7],
+        "trays": [
+          { row: 1, col: 0 },
+          { row: 4, col: 6 },
+          { row: 6, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 6 }, { row: 1, col: 6 }, { row: 2, col: 6 }, { row: 3, col: 6 },
+          { row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }, { row: 1, col: 4 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }, { row: 2, col: 4 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 3 }, { row: 3, col: 4 },
+          { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 3 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+          { row: 7, col: 0 }, { row: 7, col: 1 }, { row: 7, col: 2 }, { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 0, col: 2, unlockedBy: 1 },
+          { row: 2, col: 5, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 1, col: 5, fruitId: 0 }
+        ],
+        "keySquares": [
+          { row: 1, col: 0, keyId: 0 },
+          { row: 4, col: 6, keyId: 1 }
+        ],
+        "player": { row: 6, col: 0 },
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+      },
+      {
+        "name": "06_1",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 3, col: 5 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1, unlockedBy: 0 },
+          { row: 1, col: 5 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 5, col: 0, keyId: 0 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "06_2",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 3, col: 5 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1 },
+          { row: 1, col: 5, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 3, col: 5, keyId: 0 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "06_3",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 3, col: 5 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1, unlockedBy: 0 },
+          { row: 1, col: 5, unlockedBy: 1 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 },
+          { row: 3, col: 5, keyId: 1 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+      },
+      {
+        "name": "07_1",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 2, col: 0 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1, unlockedBy: 0 },
+          { row: 1, col: 5 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 2, col: 0, keyId: 0 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "07_2",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 2, col: 0 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1 },
+          { row: 1, col: 5, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "07_3",
+        "gridSize": [6, 6],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 2, col: 0 },
+          { row: 5, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 0 }, { row: 1, col: 0 },
+          { row: 0, col: 2 }, { row: 1, col: 2 },
+          { row: 0, col: 4 }, { row: 1, col: 4 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 1, unlockedBy: 1 },
+          { row: 1, col: 5, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 1, fruitId: 0 },
+          { row: 0, col: 5, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 },
+          { row: 2, col: 0, keyId: 1 }
+        ],
+        "player": { row: 3, col: 2 },
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+      },
+      {
+        "name": "08_1",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 0 },
+          { row: 1, col: 6 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 4, col: 0, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "08_2",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0 },
+          { row: 1, col: 6, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "08_3",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 1 },
+          { row: 1, col: 6, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 },
+          { row: 4, col: 0, keyId: 1 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+      },
+      {
+        "name": "09_1",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 0 },
+          { row: 1, col: 6 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "09_2",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0 },
+          { row: 1, col: 6, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 4, col: 6, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "09_3",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 0 },
+          { row: 1, col: 6, unlockedBy: 1 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 },
+          { row: 4, col: 6, keyId: 1 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+      },
+      {
+        "name": "10_1",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 0 },
+          { row: 1, col: 6 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 4, col: 0, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 1"]
+      },
+      {
+        "name": "10_2",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0 },
+          { row: 1, col: 6, unlockedBy: 0 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 4, col: 6, keyId: 0 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 2"]
+      },
+      {
+        "name": "10_3",
+        "gridSize": [6, 7],
+        "trays": [
+          { row: 1, col: 3 },
+          { row: 4, col: 0 },
+          { row: 4, col: 6 }
+        ],
+        "wallSquares": [
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }, { row: 0, col: 4 }, { row: 0, col: 5 },
+          { row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 4 }, { row: 2, col: 5 },
+          { row: 3, col: 1 }, { row: 3, col: 2 }, { row: 3, col: 4 }, { row: 3, col: 5 },
+          { row: 5, col: 0 }, { row: 5, col: 1 }, { row: 5, col: 2 }, { row: 5, col: 4 }, { row: 5, col: 5 }, { row: 5, col: 6 },
+        ],
+        "doorSquares": [
+          { row: 1, col: 0, unlockedBy: 0 },
+          { row: 1, col: 6, unlockedBy: 1 }
+        ],
+        "fruit": [
+          { row: 0, col: 0, fruitId: 0 },
+          { row: 0, col: 6, fruitId: 1 }
+        ],
+        "keySquares": [
+          { row: 1, col: 3, keyId: 0 },
+          { row: 4, col: 6, keyId: 1 }
+        ],
+        "player": { row: 5, col: 3 },
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
       },
     ]
 
