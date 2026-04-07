@@ -83,6 +83,9 @@
                 ng-src="{{getInventoryImg(item)}}" 
                 class="inventory-item">
         </div>
+        <div class="step_display" ng-show="((section == 'stimuli' && part_id == 1) || is_tutorial()) && active_stim.maxSteps !== undefined">
+            <strong>Steps remaining: {{stepsRemaining}}</strong>
+        </div>
 
         <!-- Endscreen -->
         <div id="end" ng-show="section == 'endscreen'" class="full-row" ng-if="section == 'endscreen' && end_id == 0" ng-cloak>
@@ -141,11 +144,10 @@
         <!-- Belief Question -->
         <div id="question" class="captions" ng-cloak>
         <p ng-show="!hide_questions() && has_belief_question()">The room designer has arranged the keys on the map. Please move your character based on your beliefs of which key unlocks which door and with the goal of obtaining a fruit: <br><br> <strong> Please note that the room designer can ONLY place keys in the <span style="color:rgb(179, 0, 255)">purple</span> trays! </strong></p>
-        <!-- <br>
+        <br>
         <br>
         <div id="ground_truth" ng-show="section == 'stimuli && (part_id == -1) || inst_id == 3" ng-hide="section != 'stimuli' || part_id == 0 || part_id == 1"></div>
         <br>
-        <p ng-show="inst_id == 4 || inst_id == 7">Press <strong>Next</strong> to continue.</p>
         <div class="all_statements">
             <p ng-show="!hide_questions() && has_belief_question()"><strong>Please rate how likely the following statements are:</strong></p>
             <br>
@@ -165,8 +167,9 @@
                         min="0" 
                         max="100" 
                         class="slider"
-                        ng-init="response.beliefs[$index] = response.beliefs[$index] || 50"
-                        ng-change="updateSliderValuePosition($index, response.beliefs[$index])">
+                        ng-init="response.beliefs[$index] = 50; updateSliderValuePosition($index, 50)"
+                        ng-change="updateSliderValuePosition($index, response.beliefs[$index])"
+                        onkeydown="return false;">
 
                     <div class="label_nums">
                         <p>0</p>
@@ -175,14 +178,14 @@
                     <br>
             </div>
             </ul>
-        </div> -->
+        </div>
         </div>
 
-        <!-- Post-Stimulus Feedback
+        <!-- Post-Stimulus Feedback -->
         <p ng-show="section == 'stimuli' && part_id < 0" class="feedback" ng-cloak>
         You earned <strong>{{stim_reward}}</strong> bonus point(s) this round, for a total of <strong>{{total_reward}}</strong> points.<br><br>
         Press <strong>Next</strong> to continue to the next map.
-        </p> -->
+        </p>
 
         <!-- Comprehension Questions -->
         <div ng-show="section == 'instructions' && instruction_has_question()" class="comprehension_question" ng-cloak>

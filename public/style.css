@@ -40,6 +40,73 @@ body {
   text-align: left;
 }
 
+.wrapper {  
+    width: 100%;
+    text-align: center;
+    position: relative;
+}
+
+.slider {
+  position: relative;
+  width: 100%;
+  opacity: 0.8;
+  height: 25px;
+}
+
+.slider_value {
+  position: absolute;
+  top: -35px;
+  left: 0;
+  background: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  pointer-events: none;
+  transition: left 0.1s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.slider_value::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #333;
+}
+
+.all_statements {
+  transform: translateY(-50px);
+}
+
+.label_nums {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+  width: 25px;
+  height: 25px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.slider:hover {
+  transform: translateY(-2px);
+  transition: 0.2s;
+  opacity: 1;
+}
+
 .captions strong {
   font-weight: 700;
 }
@@ -69,6 +136,36 @@ body {
 .stimulus {
   float: right;
   width: 80%;
+}
+
+.display {
+    display: flex;
+    margin-top: 10px;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.button_timer {
+  display: flex;
+  justify-content: space-between;
+}
+
+.button_timer button {
+  margin-left: 20px;
+}
+
+#ground_truth {
+    margin: auto;
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    background-color: rgb(255, 255, 255);
+
+    text-align: center;
+
+    border-style: solid;
+    border-width: 1px;
+    border-color: #272727;
 }
 
 ul.no-bullets {

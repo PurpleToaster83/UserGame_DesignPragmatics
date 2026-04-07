@@ -197,7 +197,7 @@ experimentApp.controller('ExperimentController',
         // Initialize stimuli section
         $scope.section = "stimuli";
         $scope.stim_id = 0;
-        $scope.part_id = 1;
+        $scope.part_id = 0;
         $scope.ratings = [];
         $scope.active_stim = $scope.stimuli_set[0];
         $scope.inventory = [];
@@ -268,15 +268,6 @@ experimentApp.controller('ExperimentController',
         }
       }
 
-      //   $scope.div = document.getElementById('ground_truth')
-      //   if ($scope.inst_id == 4 || $scope.inst_id == 7) {
-      //       $scope.div.innerHTML = "";
-      //       $scope.div.innerHTML += "<u>Here are the types of liquid in each flask:</u>" + "<br><br>";
-      //       $scope.instructions[$scope.inst_id].ground_truth.forEach((element) => {
-      //           $scope.div.innerHTML += element + "<br>";
-      //       });
-      //   }
-
       if ($scope.section == 'instructions' && $scope.instructions[$scope.inst_id] && $scope.instructions[$scope.inst_id].tutorial) {
         const stimIndex = $scope.instructions[$scope.inst_id].tutorialStim;
         $scope.active_stim = $scope.tutorial_stimuli[stimIndex];
@@ -284,6 +275,8 @@ experimentApp.controller('ExperimentController',
         $scope.initializeGridWhenReady();
       }
       
+      $scope.reset_response();
+      $scope.valid_belief = false;
       $scope.comprehension_response = "";
       $scope.valid_comprehension = false;
       $scope.exam_response = "";
@@ -304,21 +297,37 @@ experimentApp.controller('ExperimentController',
         $scope.ratings = [];
         start_time = (new Date()).getTime();
       } else if ($scope.part_id == 1) {
-        // Done with grid, go to ground truth
-        $scope.part_id = 2;
+          // Done with grid, go to belief questions + ground truth
+          var step_ratings = $scope.compute_ratings($scope.response);
+          $scope.ratings = step_ratings;
+          $scope.calc_stim_reward($scope.response);
+          $scope.total_reward += $scope.stim_reward;
+          
+          // Display ground truth
+          $scope.div = document.getElementById('ground_truth');
+          $scope.div.innerHTML = "";
+          $scope.div.innerHTML += "<u>These are the door key assignments:</u><br><br>";
+          $scope.stimuli_set[$scope.stim_id].ground_truth.forEach((element) => {
+              $scope.div.innerHTML += element + "<br>";
+          });
+          
+          $scope.part_id = 2;
+
       } else if ($scope.part_id == 2) {
-        // Done with ground truth, advance to next map
-        $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
-        $scope.stim_id = $scope.stim_id + 1;
-        if ($scope.stim_id < $scope.stimuli_set.length) {
-          $scope.active_stim = $scope.stimuli_set[$scope.stim_id];
-          $scope.inventory = [];
-          $scope.part_id = 1;
-          $scope.initializeGridWhenReady();
-        } else {
-          $scope.part_id = -1;
-        }
+          // Store ratings and advance to next map
+          $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
+          $scope.stim_id = $scope.stim_id + 1;
+          if ($scope.stim_id < $scope.stimuli_set.length) {
+              $scope.active_stim = $scope.stimuli_set[$scope.stim_id];
+              $scope.inventory = [];
+              $scope.part_id = 1;
+              $scope.initializeGridWhenReady();
+          } else {
+              $scope.part_id = -1;
+          }
       }
+      $scope.reset_response();
+      $scope.valid_belief = false;
     };
 
     $scope.compute_ratings = function (response) {
@@ -484,13 +493,8 @@ experimentApp.controller('ExperimentController',
         <br><br><br>
         Press <strong>Next</strong> to continue.`,
         tutorial: true,
-        tutorialStim: 1
-      },
-      {
-        text: `<br>`,
-        tutorial: true,
-        tutorialStim: 1,
         show_questions: true,
+        tutorialStim: 1,
         question_types: ["beliefs"],
         statements: [["<strong>Key A</strong> unlocks <strong>Door 1</strong>"]]
       },
@@ -613,6 +617,7 @@ experimentApp.controller('ExperimentController',
     $scope.tutorial_stimuli = [
       {
         "name": "tutorial1",
+        "maxSteps": 5,
         "gridSize": [3, 8],
         "trays": [
           { row: 0, col: 5 }
@@ -635,6 +640,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "tutorial2",
         "gridSize": [3, 8],
+        "maxSteps": 7,
         "trays": [
           { row: 2, col: 0 },
           { row: 0, col: 5 }
@@ -1501,12 +1507,28 @@ experimentApp.controller('ExperimentController',
       },
     ]
 
+    $scope.reset_response = function () {
+      // Ensure the beliefs array is properly sized
+      const numStatements = $scope.belief_statements.length;
+      $scope.response = {
+        "beliefs": Array(numStatements).fill(50), // Initialize with 50 instead of NaN
+        "belief_ids": $scope.belief_statement_ids
+      };
+
+      $timeout(function() {
+          for (let i = 0; i < numStatements; i++) {
+              $scope.updateSliderValuePosition(i, 50);
+          }
+      }, 100);
+    }
+
     $scope.initializeGridWhenReady = function () {
       var grid = document.getElementById('grid');
       if (!grid || grid.offsetParent === null) {
-        $timeout(function () { $scope.initializeGridWhenReady(); }, 50);
+          $timeout(function () { $scope.initializeGridWhenReady(); }, 50);
       } else {
-        $scope.initializeGrid();
+          $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity; // MOVE HERE
+          $scope.initializeGrid();
       }
       if (!$scope.active_stim._idsAssigned) {
         $scope.active_stim.doorSquares.forEach((d, i) => d.displayId = i);
@@ -1603,7 +1625,17 @@ experimentApp.controller('ExperimentController',
       $scope.$apply(() => {
         $scope.lastButton = event.key;
 
-        if ($scope.has_fruit()) return;
+        $scope.lastButton = event.key;
+
+        if ($scope.all_fruits_collected()) return;
+        if ($scope.stepsRemaining <= 0) return;
+
+        const isArrow = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
+
+        if (isArrow && $scope.active_stim.maxSteps !== undefined) {
+            $scope.stepsRemaining -= 1;
+        }
+
 
         const r = $scope.active_stim.player.row;
         const c = $scope.active_stim.player.col;
@@ -1612,12 +1644,16 @@ experimentApp.controller('ExperimentController',
 
         if (event.key === "ArrowUp" && r > 0 && $scope.isPassable(r - 1, c)) {
           $scope.active_stim.player.row -= 1;
+          moved = true;
         } else if (event.key === "ArrowDown" && r < maxRow && $scope.isPassable(r + 1, c)) {
           $scope.active_stim.player.row += 1;
+          moved = true;
         } else if (event.key === "ArrowLeft" && c > 0 && $scope.isPassable(r, c - 1)) {
           $scope.active_stim.player.col -= 1;
+          moved = true;
         } else if (event.key === "ArrowRight" && c < maxCol && $scope.isPassable(r, c + 1)) {
           $scope.active_stim.player.col += 1;
+          moved = true;
         }
 
         const newR = $scope.active_stim.player.row;
@@ -1633,6 +1669,10 @@ experimentApp.controller('ExperimentController',
         if (doorIndex !== -1) {
           const doorId = $scope.active_stim.doorSquares[doorIndex].unlockedBy;
           $scope.active_stim.doorSquares.splice(doorIndex, 1); // remove the door
+          const usedKeyIndex = $scope.inventory.findIndex(item => item.type === 'key' && item.id === doorId);
+          if (usedKeyIndex !== -1) {
+              $scope.inventory.splice(usedKeyIndex, 1);
+          }
         }
 
         const fruitIndex = $scope.active_stim.fruit.findIndex(f => f.row === newR && f.col === newC);
@@ -1666,9 +1706,61 @@ experimentApp.controller('ExperimentController',
       return '';
     };
 
+    $scope.all_fruits_collected = function() {
+        return $scope.active_stim.fruit.length === 0;
+    }
+  
     $scope.has_fruit = function() {
         return $scope.inventory.some(item => item.type === 'fruit');
     }
+
+    $scope.calc_stim_reward = function (response) {
+      $scope.stim_reward = 0;
+
+      response.beliefs.forEach((belief, index) => {
+        const unlock = $scope.stimuli_set[$scope.stim_id].calc_GT[index];
+        if (unlock == "y") {
+          $scope.diff = 100 - belief;
+        }
+        else {
+          $scope.diff = belief;
+        }
+        $scope.stim_reward += (-1 * $scope.diff) + 50;
+      });
+    }
+
+    $scope.updateSliderValuePosition = function(index, value) {
+        $timeout(function() {
+            const sliderElement = document.querySelector(`#belief_rating_${index}`);
+            const sliderValueElement = document.querySelector(`label[for="belief_rating_${index}"]`);
+            
+            if (sliderElement && sliderValueElement) {
+                const sliderRect = sliderElement.getBoundingClientRect();
+                const sliderWidth = sliderRect.width;
+                
+                const min = parseFloat(sliderElement.min) || 0;
+                const max = parseFloat(sliderElement.max) || 100;
+                const val = parseFloat(value);
+                
+                if (val === 0) {
+                    sliderValueElement.style.left = '12.5px';
+                    sliderValueElement.style.transform = 'translateX(-50%)';
+                    return;
+                }
+                
+                const thumbWidth = 25;
+                const percentage = (val - min) / (max - min);
+                
+                const minPosition = thumbWidth / 2;
+                const maxPosition = sliderWidth - thumbWidth / 2;
+                const pixelPosition = minPosition + (percentage * (maxPosition - minPosition));
+                
+                sliderValueElement.style.left = `${pixelPosition}px`;
+                sliderValueElement.style.transform = 'translateX(-50%)';
+            }
+        });
+      $scope.validate_belief();
+    };
 
     $scope.initGridContainer();
   }
