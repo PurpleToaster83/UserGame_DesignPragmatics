@@ -76,8 +76,8 @@
         Round {{stim_id}}/{{stimuli_set.length}} </div>
 
         <!-- Stimuli -->
-        <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && part_id == 1) || is_tutorial()"></div>
-        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 1) || is_tutorial()">
+        <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2)) || is_tutorial()"></div>
+        <div class="inventory" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2)) || is_tutorial()">
             <span>Inventory: </span>
             <img ng-repeat="item in inventory" 
                 ng-src="{{getInventoryImg(item)}}" 
@@ -115,8 +115,8 @@
         <!-- Controls -->
         <div class="controls" ng-cloak>
         <div class="button_timer">
-            <div ng-show="part_id == 0">Button will activate in {{countdown_time}} seconds.</div>
-            <button class="button" ng-click="advance()" ng-show="section == 'stimuli' && part_id <= 0"
+        <div ng-show="section == 'stimuli' && part_id == 0">Button will activate in {{countdown_time}} seconds.</div>
+        <button class="button" ng-click="advance()" ng-show="section == 'stimuli' && part_id == 0"
             ng-disabled="(stimuli_set.length == 0) || (section == 'stimuli' && part_id == 0 && button_disabled)">
             Next&ensp;▶
             </button>
@@ -127,7 +127,7 @@
             (stimuli_set.length == 0) && !hide_questions() ||
             (valid_exam == false && section == 'instructions' && is_exam()) ||
             (valid_comprehension == false && section == 'instructions' && instruction_has_question())
-            || (section == 'stimuli' && part_id == 1 && !has_fruit()) || (is_tutorial() && !has_fruit() && inst_id != 6)">
+            || (section == 'stimuli' && part_id == 1 && !has_fruit() && stepsRemaining > 0) || (is_tutorial() && !has_fruit() && inst_id != 6 && stepsRemaining > 0)">
             Next&ensp;▶
         </button>
         </div>
@@ -182,9 +182,9 @@
         </div>
 
         <!-- Post-Stimulus Feedback -->
-        <p ng-show="section == 'stimuli' && part_id < 0" class="feedback" ng-cloak>
-        You earned <strong>{{stim_reward}}</strong> bonus point(s) this round, for a total of <strong>{{total_reward}}</strong> points.<br><br>
-        Press <strong>Next</strong> to continue to the next map.
+        <p ng-show="section == 'stimuli' && part_id == 2" class="feedback" ng-cloak>
+            You earned <strong>{{stim_reward}}</strong> bonus point(s) this round, for a total of <strong>{{total_reward}}</strong> points.<br><br>
+            Press <strong>Next</strong> to continue to the next map.
         </p>
 
         <!-- Comprehension Questions -->

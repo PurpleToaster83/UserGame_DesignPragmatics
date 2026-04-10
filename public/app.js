@@ -197,16 +197,16 @@ experimentApp.controller('ExperimentController',
         // Initialize stimuli section
         $scope.section = "stimuli";
         $scope.stim_id = 0;
-        $scope.part_id = 0;
+        $scope.part_id = 1;
         $scope.ratings = [];
         $scope.active_stim = $scope.stimuli_set[0];
         $scope.inventory = [];
-        $scope.initializeGridWhenReady();
 
         // Get time of first stimulus
         if (start_time == undefined) {
           start_time = (new Date()).getTime();
         }
+        $scope.initializeGridWhenReady();
       } else if ($scope.instructions[$scope.inst_id].exam_end) {
         // Store exam results for initial attempt
         if (!$scope.exam_done) {
@@ -291,36 +291,52 @@ experimentApp.controller('ExperimentController',
         $scope.total_payment = ($scope.total_reward > 0) ? Math.round($scope.total_reward / 10) / 100 : 0;
         $scope.data.total_payment = $scope.total_payment;
         $scope.data.total_reward = $scope.total_reward;
-      } else if ($scope.part_id < 0) {
+      }
+      else if ($scope.part_id == 0) {
+          // Timer done, show grid
+          $scope.part_id = 1;
+          $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
+          $scope.ratings = [];
+          start_time = (new Date()).getTime();
+          $scope.initializeGridWhenReady();
+      }
+      else if ($scope.part_id < 0) {
         // Advance to first part
         $scope.part_id = 1;
         $scope.ratings = [];
         start_time = (new Date()).getTime();
-      } else if ($scope.part_id == 1) {
-          // Done with grid, go to belief questions + ground truth
-          var step_ratings = $scope.compute_ratings($scope.response);
+      }
+      else if ($scope.part_id == 1) {
+          // Save beliefs and steps before reset wipes them
+          $scope.saved_response = angular.copy($scope.response);
+          $scope.saved_steps = $scope.stepsRemaining;
+          $scope.saved_max_steps = $scope.active_stim.maxSteps;
+
+          // Compute reward now so it can be displayed on part 2
+          var step_ratings = $scope.compute_ratings($scope.saved_response);
           $scope.ratings = step_ratings;
-          $scope.calc_stim_reward($scope.response);
+          $scope.calc_stim_reward($scope.saved_response, $scope.saved_steps, $scope.saved_max_steps);
           $scope.total_reward += $scope.stim_reward;
-          
-          // Display ground truth
+          $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
+
+          // Show ground truth
           $scope.div = document.getElementById('ground_truth');
           $scope.div.innerHTML = "";
           $scope.div.innerHTML += "<u>These are the door key assignments:</u><br><br>";
           $scope.stimuli_set[$scope.stim_id].ground_truth.forEach((element) => {
               $scope.div.innerHTML += element + "<br>";
           });
-          
-          $scope.part_id = 2;
 
-      } else if ($scope.part_id == 2) {
-          // Store ratings and advance to next map
-          $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
+          $scope.part_id = 2;
+      }
+      else if ($scope.part_id == 2) {
           $scope.stim_id = $scope.stim_id + 1;
           if ($scope.stim_id < $scope.stimuli_set.length) {
               $scope.active_stim = $scope.stimuli_set[$scope.stim_id];
               $scope.inventory = [];
               $scope.part_id = 1;
+              $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
+              start_time = (new Date()).getTime();
               $scope.initializeGridWhenReady();
           } else {
               $scope.part_id = -1;
@@ -377,13 +393,13 @@ experimentApp.controller('ExperimentController',
     };
 
     $scope.has_belief_question = function () {
-      if ($scope.section == "stimuli") {
-        return $scope.part_id > 0
-      } else if ($scope.section == "instructions") {
-        return ($scope.instructions[$scope.inst_id].question_types != null &&
-          $scope.instructions[$scope.inst_id].question_types.includes("beliefs"))
-      }
-      return false
+        if ($scope.section == "stimuli") {
+            return $scope.part_id == 1;
+        } else if ($scope.section == "instructions") {
+            return ($scope.instructions[$scope.inst_id].question_types != null &&
+                $scope.instructions[$scope.inst_id].question_types.includes("beliefs"))
+        }
+        return false
     };
 
     $scope.array_equals = function (a, b) {
@@ -664,9 +680,10 @@ experimentApp.controller('ExperimentController',
 
     //TODO: put in all of the stimuli
     $scope.stimuli = [
-{
+      {
         "name": "01_1",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -688,11 +705,20 @@ experimentApp.controller('ExperimentController',
           { row: 0, col: 2, keyId: 0 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "01_2",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -714,11 +740,20 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3, keyId: 0 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "01_3",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -741,11 +776,24 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3, keyId: 1 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "02_1",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -767,11 +815,20 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 3, keyId: 0 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "02_2",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -793,11 +850,20 @@ experimentApp.controller('ExperimentController',
           { row: 6, col: 2, keyId: 0 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "02_3",
         "gridSize": [7, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -820,11 +886,24 @@ experimentApp.controller('ExperimentController',
           { row: 6, col: 2, keyId: 1 }
         ],
         "player": { row: 3, col: 1 },
-        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "03_1",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -850,11 +929,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "03_2",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -880,11 +968,20 @@ experimentApp.controller('ExperimentController',
           { row: 7, col: 1, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+                "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "03_3",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -911,11 +1008,24 @@ experimentApp.controller('ExperimentController',
           { row: 7, col: 1, keyId: 1 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "04_1",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -941,11 +1051,20 @@ experimentApp.controller('ExperimentController',
           { row: 1, col: 0, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "04_2",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -971,11 +1090,20 @@ experimentApp.controller('ExperimentController',
           { row: 7, col: 1, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "04_3",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1002,11 +1130,24 @@ experimentApp.controller('ExperimentController',
           { row: 7, col: 1, keyId: 1 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "05_1",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1031,11 +1172,20 @@ experimentApp.controller('ExperimentController',
           { row: 1, col: 0, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "05_2",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1060,11 +1210,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 0 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "05_3",
         "gridSize": [8, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1090,11 +1249,24 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 1 }
         ],
         "player": { row: 6, col: 0 },
-        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "06_1",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1117,11 +1289,20 @@ experimentApp.controller('ExperimentController',
           { row: 5, col: 0, keyId: 0 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "06_2",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1144,11 +1325,20 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 5, keyId: 0 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "06_3",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1172,11 +1362,24 @@ experimentApp.controller('ExperimentController',
           { row: 3, col: 5, keyId: 1 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "07_1",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1199,11 +1402,20 @@ experimentApp.controller('ExperimentController',
           { row: 2, col: 0, keyId: 0 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "07_2",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1226,11 +1438,20 @@ experimentApp.controller('ExperimentController',
           { row: 1, col: 3, keyId: 0 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "07_3",
         "gridSize": [6, 6],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1254,11 +1475,24 @@ experimentApp.controller('ExperimentController',
           { row: 2, col: 0, keyId: 1 }
         ],
         "player": { row: 3, col: 2 },
-        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+          "y",
+          "n",
+        ]
       },
       {
         "name": "08_1",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1281,11 +1515,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 0, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "08_2",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1308,11 +1551,20 @@ experimentApp.controller('ExperimentController',
           { row: 1, col: 3, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "08_3",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1336,11 +1588,24 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 0, keyId: 1 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 2", "Key B unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+          "y",
+          "n",
+        ]
       },
       {
         "name": "09_1",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1363,11 +1628,20 @@ experimentApp.controller('ExperimentController',
           { row: 1, col: 3, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "09_2",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1390,11 +1664,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "09_3",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1418,11 +1701,24 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 1 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
       {
         "name": "10_1",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1446,11 +1742,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 0, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 1"]
+        "ground_truth": ["Key A unlocks Door 1"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+        ]
       },
       {
         "name": "10_2",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1474,11 +1779,20 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 0 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "n",
+          "y",
+        ]
       },
       {
         "name": "10_3",
         "gridSize": [6, 7],
+        "maxSteps": 5,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1503,7 +1817,19 @@ experimentApp.controller('ExperimentController',
           { row: 4, col: 6, keyId: 1 }
         ],
         "player": { row: 5, col: 3 },
-        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"]
+        "ground_truth": ["Key A unlocks Door 1", "Key B unlocks Door 2"],
+        "statements": [
+          "<strong>Key A</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key A</strong> unlocks <strong>Door 2</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 1</strong>",
+          "<strong>Key B</strong> unlocks <strong>Door 2</strong>",
+        ],
+        calc_GT: [
+          "y",
+          "n",
+          "n",
+          "y",
+        ]
       },
     ]
 
@@ -1632,16 +1958,12 @@ experimentApp.controller('ExperimentController',
 
         const isArrow = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
 
-        if (isArrow && $scope.active_stim.maxSteps !== undefined) {
-            $scope.stepsRemaining -= 1;
-        }
-
-
         const r = $scope.active_stim.player.row;
         const c = $scope.active_stim.player.col;
         const maxRow = $scope.active_stim.gridSize[0] - 1;
         const maxCol = $scope.active_stim.gridSize[1] - 1;
 
+        let moved = false;
         if (event.key === "ArrowUp" && r > 0 && $scope.isPassable(r - 1, c)) {
           $scope.active_stim.player.row -= 1;
           moved = true;
@@ -1654,6 +1976,10 @@ experimentApp.controller('ExperimentController',
         } else if (event.key === "ArrowRight" && c < maxCol && $scope.isPassable(r, c + 1)) {
           $scope.active_stim.player.col += 1;
           moved = true;
+        }
+
+        if (isArrow && moved && $scope.active_stim.maxSteps !== undefined) {
+            $scope.stepsRemaining -= 1;
         }
 
         const newR = $scope.active_stim.player.row;
@@ -1714,19 +2040,22 @@ experimentApp.controller('ExperimentController',
         return $scope.inventory.some(item => item.type === 'fruit');
     }
 
-    $scope.calc_stim_reward = function (response) {
-      $scope.stim_reward = 0;
+    $scope.calc_stim_reward = function (response, stepsRemaining, maxSteps) {
+        $scope.stim_reward = 0;
 
-      response.beliefs.forEach((belief, index) => {
-        const unlock = $scope.stimuli_set[$scope.stim_id].calc_GT[index];
-        if (unlock == "y") {
-          $scope.diff = 100 - belief;
+        response.beliefs.forEach((belief, index) => {
+            const unlock = $scope.stimuli_set[$scope.stim_id].calc_GT[index];
+            if (unlock == "y") {
+                $scope.diff = 100 - belief;
+            } else {
+                $scope.diff = belief;
+            }
+            $scope.stim_reward += (-1 * $scope.diff) + 50;
+        });
+
+        if (maxSteps !== undefined && maxSteps !== Infinity) {
+            $scope.stim_reward += stepsRemaining;
         }
-        else {
-          $scope.diff = belief;
-        }
-        $scope.stim_reward += (-1 * $scope.diff) + 50;
-      });
     }
 
     $scope.updateSliderValuePosition = function(index, value) {
