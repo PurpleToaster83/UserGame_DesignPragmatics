@@ -1946,17 +1946,10 @@ experimentApp.controller('ExperimentController',
 
       $scope.initializeGrid();
     }
-    
-    document.addEventListener('keydown', (event) => {
-      $scope.$apply(() => {
-        $scope.lastButton = event.key;
 
-        $scope.lastButton = event.key;
-
+    $scope.movePlayer = function(direction) {
         if ($scope.all_fruits_collected()) return;
         if ($scope.stepsRemaining <= 0) return;
-
-        const isArrow = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key);
 
         const r = $scope.active_stim.player.row;
         const c = $scope.active_stim.player.col;
@@ -1964,21 +1957,21 @@ experimentApp.controller('ExperimentController',
         const maxCol = $scope.active_stim.gridSize[1] - 1;
 
         let moved = false;
-        if (event.key === "ArrowUp" && r > 0 && $scope.isPassable(r - 1, c)) {
-          $scope.active_stim.player.row -= 1;
-          moved = true;
-        } else if (event.key === "ArrowDown" && r < maxRow && $scope.isPassable(r + 1, c)) {
-          $scope.active_stim.player.row += 1;
-          moved = true;
-        } else if (event.key === "ArrowLeft" && c > 0 && $scope.isPassable(r, c - 1)) {
-          $scope.active_stim.player.col -= 1;
-          moved = true;
-        } else if (event.key === "ArrowRight" && c < maxCol && $scope.isPassable(r, c + 1)) {
-          $scope.active_stim.player.col += 1;
-          moved = true;
+        if (direction === "ArrowUp" && r > 0 && $scope.isPassable(r - 1, c)) {
+            $scope.active_stim.player.row -= 1;
+            moved = true;
+        } else if (direction === "ArrowDown" && r < maxRow && $scope.isPassable(r + 1, c)) {
+            $scope.active_stim.player.row += 1;
+            moved = true;
+        } else if (direction === "ArrowLeft" && c > 0 && $scope.isPassable(r, c - 1)) {
+            $scope.active_stim.player.col -= 1;
+            moved = true;
+        } else if (direction === "ArrowRight" && c < maxCol && $scope.isPassable(r, c + 1)) {
+            $scope.active_stim.player.col += 1;
+            moved = true;
         }
 
-        if (isArrow && moved && $scope.active_stim.maxSteps !== undefined) {
+        if (moved && $scope.active_stim.maxSteps !== undefined) {
             $scope.stepsRemaining -= 1;
         }
 
@@ -1986,34 +1979,33 @@ experimentApp.controller('ExperimentController',
         const newC = $scope.active_stim.player.col;
         const keyIndex = $scope.active_stim.keySquares.findIndex(k => k.row === newR && k.col === newC);
         if (keyIndex !== -1) {
-          const keyId = $scope.active_stim.keySquares[keyIndex].keyId;
-          $scope.active_stim.keySquares.splice(keyIndex, 1); // remove the key
-          $scope.inventory.push({ type: 'key', id: keyId });
+            const keyId = $scope.active_stim.keySquares[keyIndex].keyId;
+            $scope.active_stim.keySquares.splice(keyIndex, 1);
+            $scope.inventory.push({ type: 'key', id: keyId });
         }
 
         const doorIndex = $scope.active_stim.doorSquares.findIndex(d => d.row === newR && d.col === newC);
         if (doorIndex !== -1) {
-          const doorId = $scope.active_stim.doorSquares[doorIndex].unlockedBy;
-          $scope.active_stim.doorSquares.splice(doorIndex, 1); // remove the door
-          const usedKeyIndex = $scope.inventory.findIndex(item => item.type === 'key' && item.id === doorId);
-          if (usedKeyIndex !== -1) {
-              $scope.inventory.splice(usedKeyIndex, 1);
-          }
+            const doorId = $scope.active_stim.doorSquares[doorIndex].unlockedBy;
+            $scope.active_stim.doorSquares.splice(doorIndex, 1);
+            const usedKeyIndex = $scope.inventory.findIndex(item => item.type === 'key' && item.id === doorId);
+            if (usedKeyIndex !== -1) {
+                $scope.inventory.splice(usedKeyIndex, 1);
+            }
         }
 
         const fruitIndex = $scope.active_stim.fruit.findIndex(f => f.row === newR && f.col === newC);
         if (fruitIndex !== -1) {
-          const fruitId = $scope.active_stim.fruit[fruitIndex].fruitId;
-          $scope.active_stim.fruit.splice(fruitIndex, 1); // remove the fruit
-          $scope.inventory.push({ type: 'fruit', id: fruitId });
-          $scope.endMap = true;
+            const fruitId = $scope.active_stim.fruit[fruitIndex].fruitId;
+            $scope.active_stim.fruit.splice(fruitIndex, 1);
+            $scope.inventory.push({ type: 'fruit', id: fruitId });
+            $scope.endMap = true;
         }
 
         $scope.player_x = $scope.active_stim.player.row;
         $scope.player_y = $scope.active_stim.player.col;
-      });
-      $scope.initializeGrid();
-    });
+        $scope.initializeGrid();
+    }
 
     $scope.isPassable = function (row, col) {
       const isWall = $scope.active_stim.wallSquares.some(w => w.row === row && w.col === col);

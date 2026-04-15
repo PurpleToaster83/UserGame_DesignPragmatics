@@ -119,6 +119,32 @@ body {
   object-fit: scale-down;
 }
 
+.dpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+}
+.dpad-row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    margin: 2px 0;
+}
+.dpad-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+}
+.dpad-btn:active {
+    background-color: #388E3C;
+}
+
 .underline {
   text-decoration: underline;
 }

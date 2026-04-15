@@ -26,7 +26,7 @@
     <!-- Left Side -->
     <div class="w3-col m5">
         <!-- Instructions -->
-        <div ng-show="section == 'instructions' && instruction_has_text() && !instruction_has_image()" class="full-row"
+        <div ng-show="section == 'instructions' && instruction_has_text() && !instruction_has_image() && !is_tutorial()"  class="full-row"
         ng-bind-html="instructions[inst_id].text" ng-cloak>
         </div>
 
@@ -85,6 +85,16 @@
         </div>
         <div class="step_display" ng-show="((section == 'stimuli' && part_id == 1) || is_tutorial()) && active_stim.maxSteps !== undefined">
             <strong>Steps remaining: {{stepsRemaining}}</strong>
+        </div>
+        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 1) || is_tutorial()">
+            <div class="dpad-row">
+                <button class="dpad-btn" ng-click="movePlayer('ArrowUp')">▲</button>
+            </div>
+            <div class="dpad-row">
+                <button class="dpad-btn" ng-click="movePlayer('ArrowLeft')">◀</button>
+                <button class="dpad-btn" ng-click="movePlayer('ArrowDown')">▼</button>
+                <button class="dpad-btn" ng-click="movePlayer('ArrowRight')">▶</button>
+            </div>
         </div>
 
         <!-- Endscreen -->
