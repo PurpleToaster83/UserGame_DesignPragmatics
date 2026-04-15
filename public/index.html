@@ -77,16 +77,16 @@
 
         <!-- Stimuli -->
         <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2)) || is_tutorial()"></div>
-        <div class="inventory" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2)) || is_tutorial()">
+        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 1) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
             <span>Inventory: </span>
             <img ng-repeat="item in inventory" 
                 ng-src="{{getInventoryImg(item)}}" 
                 class="inventory-item">
         </div>
-        <div class="step_display" ng-show="((section == 'stimuli' && part_id == 1) || is_tutorial()) && active_stim.maxSteps !== undefined">
+        <div class="step_display" ng-show="((section == 'stimuli' && (part_id == 1 || part_id == 2)) || (is_tutorial() && !instructions[inst_id].show_grid_only)) && active_stim.maxSteps !== undefined">
             <strong>Steps remaining: {{stepsRemaining}}</strong>
         </div>
-        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 1) || is_tutorial()">
+        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 1) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
             <div class="dpad-row">
                 <button class="dpad-btn" ng-click="movePlayer('ArrowUp')">▲</button>
             </div>
@@ -137,7 +137,7 @@
             (stimuli_set.length == 0) && !hide_questions() ||
             (valid_exam == false && section == 'instructions' && is_exam()) ||
             (valid_comprehension == false && section == 'instructions' && instruction_has_question())
-            || (section == 'stimuli' && part_id == 1 && !has_fruit() && stepsRemaining > 0) || (is_tutorial() && !has_fruit() && inst_id != 6 && stepsRemaining > 0)">
+            || (section == 'stimuli' && part_id == 1 && !has_fruit() && stepsRemaining > 0) || (is_tutorial() && !instructions[inst_id].show_grid_only && !has_fruit() && inst_id != 6 && stepsRemaining > 0)">
             Next&ensp;▶
         </button>
         </div>
@@ -147,8 +147,8 @@
     <div class="w3-col m6" ng-show="show_rhs" style="margin-left: 5%;">
 
         <!-- Captioned Instructions -->
-        <div ng-show="section == 'instructions' && instruction_has_image()" class="captions"
-        ng-bind-html="instructions[inst_id].text" ng-cloak>
+        <div ng-show="section == 'instructions' && (instruction_has_image() || is_tutorial())" class="captions"
+            ng-bind-html="instructions[inst_id].text">
         </div>
 
         <!-- Belief Question -->

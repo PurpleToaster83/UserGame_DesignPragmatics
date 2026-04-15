@@ -472,7 +472,10 @@ experimentApp.controller('ExperimentController',
 
               Press the <strong>Next</strong> button to continue.
               `,
-        show_questions: false
+        show_questions: false,
+        tutorial: true,
+        tutorialStim: 0,
+        show_grid_only: true
       },
       {
         text: `At each trial, you will be shown a map that has keys and doors placed in different positions. Your goal is to determine what key unlocks which door in order to procuure the fruits.<br>
