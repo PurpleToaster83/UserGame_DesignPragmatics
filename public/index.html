@@ -76,17 +76,17 @@
         Round {{stim_id}}/{{stimuli_set.length}} </div>
 
         <!-- Stimuli -->
-        <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2)) || is_tutorial()"></div>
-        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 1) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
+        <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2 || part_id == 3)) || is_tutorial()"></div>
+        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
             <span>Inventory: </span>
             <img ng-repeat="item in inventory" 
                 ng-src="{{getInventoryImg(item)}}" 
                 class="inventory-item">
         </div>
-        <div class="step_display" ng-show="((section == 'stimuli' && (part_id == 1 || part_id == 2)) || (is_tutorial() && !instructions[inst_id].show_grid_only)) && active_stim.maxSteps !== undefined">
+        <div class="step_display" ng-show="((section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)) && active_stim.maxSteps !== undefined">
             <strong>Steps remaining: {{stepsRemaining}}</strong>
         </div>
-        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 1) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
+        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
             <div class="dpad-row">
                 <button class="dpad-btn" ng-click="movePlayer('ArrowUp')">▲</button>
             </div>
@@ -137,7 +137,8 @@
             (stimuli_set.length == 0) && !hide_questions() ||
             (valid_exam == false && section == 'instructions' && is_exam()) ||
             (valid_comprehension == false && section == 'instructions' && instruction_has_question())
-            || (section == 'stimuli' && part_id == 1 && !has_fruit() && stepsRemaining > 0) || (is_tutorial() && !instructions[inst_id].show_grid_only && !has_fruit() && inst_id != 6 && stepsRemaining > 0)">
+            || (section == 'stimuli' && part_id == 1 && !valid_belief)
+            || (section == 'stimuli' && part_id == 2 && !has_fruit() && stepsRemaining > 0)">
             Next&ensp;▶
         </button>
         </div>
@@ -156,10 +157,12 @@
         <p ng-show="!hide_questions() && has_belief_question()">The room designer has arranged the keys on the map. Please move your character based on your beliefs of which key unlocks which door and with the goal of obtaining a fruit: <br><br> <strong> Please note that the room designer can ONLY place keys in the <span style="color:rgb(179, 0, 255)">purple</span> trays! </strong></p>
         <br>
         <br>
-        <div id="ground_truth" ng-show="section == 'stimuli && (part_id == -1) || inst_id == 3" ng-hide="section != 'stimuli' || part_id == 0 || part_id == 1"></div>
+            <div id="ground_truth" ng-show="section == 'stimuli' && part_id == 3"></div>
         <br>
         <div class="all_statements">
-            <p ng-show="!hide_questions() && has_belief_question()"><strong>Please rate how likely the following statements are:</strong></p>
+            <p ng-show="!hide_questions() && has_belief_question() && section == 'stimuli'">
+                Please rate how likely the following statements are before moving your character:
+            </p>
             <br>
             <ul ng-show="!hide_questions() && has_belief_question()" class="no-bullets" ng-repeat="stmt in belief_statements track by $index">
             <span class="statement"><span ng-bind-html="style_statement(stmt)"></span><br></span>
@@ -192,10 +195,11 @@
         </div>
 
         <!-- Post-Stimulus Feedback -->
-        <p ng-show="section == 'stimuli' && part_id == 2" class="feedback" ng-cloak>
+        <p ng-show="section == 'stimuli' && part_id == 3" class="feedback" ng-cloak>
             You earned <strong>{{stim_reward}}</strong> bonus point(s) this round, for a total of <strong>{{total_reward}}</strong> points.<br><br>
             Press <strong>Next</strong> to continue to the next map.
         </p>
+
 
         <!-- Comprehension Questions -->
         <div ng-show="section == 'instructions' && instruction_has_question()" class="comprehension_question" ng-cloak>

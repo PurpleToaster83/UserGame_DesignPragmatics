@@ -194,17 +194,16 @@ experimentApp.controller('ExperimentController',
     
     $scope.advance_instructions = async function () {
       if ($scope.inst_id == $scope.instructions.length - 1) {
-        // Initialize stimuli section
         $scope.section = "stimuli";
         $scope.stim_id = 0;
         $scope.part_id = 1;
         $scope.ratings = [];
         $scope.active_stim = $scope.stimuli_set[0];
         $scope.inventory = [];
-
-        // Get time of first stimulus
+        $scope.belief_statements = $scope.stimuli_set[0].statements;
+        $scope.belief_statement_ids = Array.from(Array($scope.stimuli_set[0].statements.length).keys());
         if (start_time == undefined) {
-          start_time = (new Date()).getTime();
+            start_time = (new Date()).getTime();
         }
         $scope.initializeGridWhenReady();
       } else if ($scope.instructions[$scope.inst_id].exam_end) {
@@ -251,6 +250,8 @@ experimentApp.controller('ExperimentController',
           }
           $scope.active_stim = $scope.stimuli_set[0];
           $scope.inventory = [];
+          $scope.belief_statements = $scope.stimuli_set[0].statements;
+          $scope.belief_statement_ids = Array.from(Array($scope.stimuli_set[0].statements.length).keys());
           $scope.initializeGridWhenReady();
           return;
         }
@@ -300,48 +301,54 @@ experimentApp.controller('ExperimentController',
           start_time = (new Date()).getTime();
           $scope.initializeGridWhenReady();
       }
-      else if ($scope.part_id < 0) {
-        // Advance to first part
+    else if ($scope.part_id < 0) {
         $scope.part_id = 1;
+        $scope.belief_statements = $scope.stimuli_set[$scope.stim_id].statements;
+        $scope.belief_statement_ids = Array.from(Array($scope.belief_statements.length).keys());
         $scope.ratings = [];
         start_time = (new Date()).getTime();
-      }
-      else if ($scope.part_id == 1) {
-          // Save beliefs and steps before reset wipes them
-          $scope.saved_response = angular.copy($scope.response);
-          $scope.saved_steps = $scope.stepsRemaining;
-          $scope.saved_max_steps = $scope.active_stim.maxSteps;
+        $scope.initializeGridWhenReady();
+    }
+    else if ($scope.part_id == 1) {
+      // Save beliefs before reset wipes them
+      $scope.saved_response = angular.copy($scope.response);
+      $scope.saved_max_steps = $scope.active_stim.maxSteps;
+      $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
+      $scope.part_id = 2;
+    }
+    else if ($scope.part_id == 2) {
+      // Save steps, compute reward, show ground truth
+      $scope.saved_steps = $scope.stepsRemaining;
 
-          // Compute reward now so it can be displayed on part 2
-          var step_ratings = $scope.compute_ratings($scope.saved_response);
-          $scope.ratings = step_ratings;
-          $scope.calc_stim_reward($scope.saved_response, $scope.saved_steps, $scope.saved_max_steps);
-          $scope.total_reward += $scope.stim_reward;
-          $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
+      var step_ratings = $scope.compute_ratings($scope.saved_response);
+      $scope.ratings = step_ratings;
+      $scope.calc_stim_reward($scope.saved_response, $scope.saved_steps, $scope.saved_max_steps);
+      $scope.total_reward += $scope.stim_reward;
+      $scope.data.stimuli_set[$scope.stimuli_set[$scope.stim_id].name] = $scope.ratings;
 
-          // Show ground truth
-          $scope.div = document.getElementById('ground_truth');
-          $scope.div.innerHTML = "";
-          $scope.div.innerHTML += "<u>These are the door key assignments:</u><br><br>";
-          $scope.stimuli_set[$scope.stim_id].ground_truth.forEach((element) => {
-              $scope.div.innerHTML += element + "<br>";
-          });
+      $scope.div = document.getElementById('ground_truth');
+      $scope.div.innerHTML = "";
+      $scope.div.innerHTML += "<u>These are the door key assignments:</u><br><br>";
+      $scope.stimuli_set[$scope.stim_id].ground_truth.forEach((element) => {
+          $scope.div.innerHTML += element + "<br>";
+      });
 
-          $scope.part_id = 2;
+      $scope.part_id = 3;
+    }
+    else if ($scope.part_id == 3) {
+      $scope.stim_id = $scope.stim_id + 1;
+      if ($scope.stim_id < $scope.stimuli_set.length) {
+          $scope.active_stim = $scope.stimuli_set[$scope.stim_id];
+          $scope.inventory = [];
+          $scope.part_id = 1;
+          $scope.belief_statements = $scope.stimuli_set[$scope.stim_id].statements;
+          $scope.belief_statement_ids = Array.from(Array($scope.belief_statements.length).keys());
+          start_time = (new Date()).getTime();
+          $scope.initializeGridWhenReady();
+      } else {
+          $scope.part_id = -1;
       }
-      else if ($scope.part_id == 2) {
-          $scope.stim_id = $scope.stim_id + 1;
-          if ($scope.stim_id < $scope.stimuli_set.length) {
-              $scope.active_stim = $scope.stimuli_set[$scope.stim_id];
-              $scope.inventory = [];
-              $scope.part_id = 1;
-              $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
-              start_time = (new Date()).getTime();
-              $scope.initializeGridWhenReady();
-          } else {
-              $scope.part_id = -1;
-          }
-      }
+    }
       $scope.reset_response();
       $scope.valid_belief = false;
     };
@@ -1950,7 +1957,9 @@ experimentApp.controller('ExperimentController',
       $scope.initializeGrid();
     }
 
-    $scope.movePlayer = function(direction) {
+    $scope.movePlayer = function (direction) {
+      if ($scope.part_id !== 2 && !$scope.is_tutorial()) return;
+      
         if ($scope.all_fruits_collected()) return;
         if ($scope.stepsRemaining <= 0) return;
 
