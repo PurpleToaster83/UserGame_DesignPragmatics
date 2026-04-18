@@ -77,16 +77,16 @@
 
         <!-- Stimuli -->
         <div class="grid-container" id="grid" ng-show="(section == 'stimuli' && (part_id == 1 || part_id == 2 || part_id == 3)) || is_tutorial()"></div>
-        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
+        <div class="inventory" ng-show="(section == 'stimuli' && part_id == 2) || (section == 'instructions' && is_tutorial() && !instructions[inst_id].show_grid_only && tutorial_part == 2)">
             <span>Inventory: </span>
             <img ng-repeat="item in inventory" 
                 ng-src="{{getInventoryImg(item)}}" 
                 class="inventory-item">
         </div>
-        <div class="step_display" ng-show="((section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)) && active_stim.maxSteps !== undefined">
+        <div class="step_display" ng-show="((section == 'stimuli' && part_id == 2) || (section == 'instructions' && is_tutorial() && !instructions[inst_id].show_grid_only && tutorial_part == 2)) && active_stim.maxSteps !== undefined">
             <strong>Steps remaining: {{stepsRemaining}}</strong>
         </div>
-        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 2) || (is_tutorial() && !instructions[inst_id].show_grid_only)">
+        <div class="dpad" ng-show="(section == 'stimuli' && part_id == 2) || (section == 'instructions' && is_tutorial() && !instructions[inst_id].show_grid_only && tutorial_part == 2)">
             <div class="dpad-row">
                 <button class="dpad-btn" ng-click="movePlayer('ArrowUp')">▲</button>
             </div>
@@ -138,7 +138,8 @@
             (valid_exam == false && section == 'instructions' && is_exam()) ||
             (valid_comprehension == false && section == 'instructions' && instruction_has_question())
             || (section == 'stimuli' && part_id == 1 && !valid_belief)
-            || (section == 'stimuli' && part_id == 2 && !has_fruit() && stepsRemaining > 0)">
+            || (section == 'stimuli' && part_id == 2 && !has_fruit() && stepsRemaining > 0) 
+            || (section == 'instructions' && is_tutorial() && !instructions[inst_id].show_grid_only && tutorial_part == 2 && !has_fruit() && stepsRemaining > 0)">
             Next&ensp;▶
         </button>
         </div>

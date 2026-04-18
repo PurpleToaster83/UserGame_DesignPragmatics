@@ -192,97 +192,131 @@ experimentApp.controller('ExperimentController',
       }
     };
     
-    $scope.advance_instructions = async function () {
-      if ($scope.inst_id == $scope.instructions.length - 1) {
-        $scope.section = "stimuli";
-        $scope.stim_id = 0;
-        $scope.part_id = 1;
-        $scope.ratings = [];
-        $scope.active_stim = $scope.stimuli_set[0];
-        $scope.inventory = [];
-        $scope.belief_statements = $scope.stimuli_set[0].statements;
-        $scope.belief_statement_ids = Array.from(Array($scope.stimuli_set[0].statements.length).keys());
-        if (start_time == undefined) {
-            start_time = (new Date()).getTime();
-        }
-        $scope.initializeGridWhenReady();
-      } else if ($scope.instructions[$scope.inst_id].exam_end) {
-        // Store exam results for initial attempt
-        if (!$scope.exam_done) {
-          let exam_data = {
-            "results": $scope.exam_results,
-            "score": $scope.exam_score
+  $scope.advance_instructions = async function () {
+
+      // Handle tutorial phase progression
+      if ($scope.instructions[$scope.inst_id] && $scope.instructions[$scope.inst_id].tutorial &&
+          $scope.instructions[$scope.inst_id].question_types && !$scope.instructions[$scope.inst_id].show_grid_only) {
+
+          if ($scope.tutorial_part == 1) {
+              // Save beliefs, reset stim, move to movement phase
+              $scope.saved_response = angular.copy($scope.response);
+              $scope.saved_max_steps = $scope.active_stim.maxSteps;
+              const stimIndex = $scope.instructions[$scope.inst_id].tutorialStim;
+              $scope.active_stim = JSON.parse(JSON.stringify($scope.tutorial_stimuli[stimIndex]));
+              $scope.active_stim._idsAssigned = false;
+              $scope.inventory = [];
+              $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
+              $scope.tutorial_part = 2;
+              $scope.reset_response();
+              $scope.valid_belief = false;
+              $scope.initializeGridWhenReady();
+              return;
+          } else if ($scope.tutorial_part == 2) {
+              $scope.tutorial_part = 0;
+              $scope.inst_id = $scope.inst_id + 1;
+              $scope.reset_response();
+              $scope.valid_belief = false;
+              $scope.comprehension_response = "";
+              $scope.valid_comprehension = false;
+              $scope.exam_response = "";
+              $scope.valid_exam = false;
+              return;
           }
-          $scope.log("Exam Results: " + exam_data.results);
-          $scope.log("Exam Score: " + exam_data.score);
-          $scope.data.exam = exam_data;
-          $scope.exam_done = true;
-        }
-        // Loop back to start of exam if not all questions are correct
-        if ($scope.exam_score < $scope.exam_results.length) {
-          $scope.inst_id = $scope.instructions[$scope.inst_id].exam_start_id;
-        } else {
-          $scope.inst_id = $scope.inst_id + 1;
-        }
-        $scope.exam_results = [];
-        $scope.exam_score = 0;
-      } else {
-        // Score exam question
-        if ($scope.instructions[$scope.inst_id].exam) {
-          let ans = $scope.instructions[$scope.inst_id].options[$scope.instructions[$scope.inst_id].answer];
-          let correct = ans === $scope.exam_response;
-          $scope.exam_results.push(correct);
-          $scope.exam_score = $scope.exam_results.filter(correct => correct == true).length
-          $scope.last_exam_correct = correct;
-          $scope.last_exam_response = $scope.exam_response;
-        }
-        // Increment instruction counter
-        $scope.inst_id = $scope.inst_id + 1;
-        if ($scope.inst_id >= $scope.instructions.length) {
+      }
+
+      if ($scope.inst_id == $scope.instructions.length - 1) {
           $scope.section = "stimuli";
           $scope.stim_id = 0;
           $scope.part_id = 1;
           $scope.ratings = [];
-          if ($scope.stimuli_set.length === 0) {
-              // stimuli not loaded yet, wait and retry
-              $timeout(function() { $scope.advance_instructions(); }, 100);
-              return;
-          }
           $scope.active_stim = $scope.stimuli_set[0];
           $scope.inventory = [];
           $scope.belief_statements = $scope.stimuli_set[0].statements;
           $scope.belief_statement_ids = Array.from(Array($scope.stimuli_set[0].statements.length).keys());
+          if (start_time == undefined) {
+              start_time = (new Date()).getTime();
+          }
           $scope.initializeGridWhenReady();
-          return;
-        }
-        // Delay RHS display
-        if ($scope.instructions[$scope.inst_id].delay > 0) {
-          $scope.show_rhs = false;
-          $timeout(function () { $scope.show_rhs = true; },
-            $scope.instructions[$scope.inst_id].delay);
-        }
-        // Set new belief statements
-        if ($scope.has_belief_question()) {
-          $scope.belief_statements = $scope.instructions[$scope.inst_id].statements;
-          let n = $scope.belief_statements.length;
-          $scope.belief_statement_ids = Array.from(Array(n).keys());
-        }
+      } else if ($scope.instructions[$scope.inst_id].exam_end) {
+          if (!$scope.exam_done) {
+              let exam_data = {
+                  "results": $scope.exam_results,
+                  "score": $scope.exam_score
+              }
+              $scope.log("Exam Results: " + exam_data.results);
+              $scope.log("Exam Score: " + exam_data.score);
+              $scope.data.exam = exam_data;
+              $scope.exam_done = true;
+          }
+          if ($scope.exam_score < $scope.exam_results.length) {
+              $scope.inst_id = $scope.instructions[$scope.inst_id].exam_start_id;
+          } else {
+              $scope.inst_id = $scope.inst_id + 1;
+          }
+          $scope.exam_results = [];
+          $scope.exam_score = 0;
+      } else {
+          if ($scope.instructions[$scope.inst_id].exam) {
+              let ans = $scope.instructions[$scope.inst_id].options[$scope.instructions[$scope.inst_id].answer];
+              let correct = ans === $scope.exam_response;
+              $scope.exam_results.push(correct);
+              $scope.exam_score = $scope.exam_results.filter(correct => correct == true).length;
+              $scope.last_exam_correct = correct;
+              $scope.last_exam_response = $scope.exam_response;
+          }
+          $scope.inst_id = $scope.inst_id + 1;
+          if ($scope.inst_id >= $scope.instructions.length) {
+              $scope.section = "stimuli";
+              $scope.stim_id = 0;
+              $scope.part_id = 1;
+              $scope.ratings = [];
+              if ($scope.stimuli_set.length === 0) {
+                  $timeout(function() { $scope.advance_instructions(); }, 100);
+                  return;
+              }
+              $scope.active_stim = $scope.stimuli_set[0];
+              $scope.inventory = [];
+              $scope.belief_statements = $scope.stimuli_set[0].statements;
+              $scope.belief_statement_ids = Array.from(Array($scope.stimuli_set[0].statements.length).keys());
+              $scope.initializeGridWhenReady();
+              return;
+          }
+          if ($scope.instructions[$scope.inst_id].delay > 0) {
+              $scope.show_rhs = false;
+              $timeout(function () { $scope.show_rhs = true; },
+                  $scope.instructions[$scope.inst_id].delay);
+          }
+          if ($scope.has_belief_question()) {
+              $scope.belief_statements = $scope.instructions[$scope.inst_id].statements;
+              let n = $scope.belief_statements.length;
+              $scope.belief_statement_ids = Array.from(Array(n).keys());
+          }
       }
 
       if ($scope.section == 'instructions' && $scope.instructions[$scope.inst_id] && $scope.instructions[$scope.inst_id].tutorial) {
-        const stimIndex = $scope.instructions[$scope.inst_id].tutorialStim;
-        $scope.active_stim = $scope.tutorial_stimuli[stimIndex];
-        $scope.inventory = [];
-        $scope.initializeGridWhenReady();
+          const stimIndex = $scope.instructions[$scope.inst_id].tutorialStim;
+          $scope.active_stim = JSON.parse(JSON.stringify($scope.tutorial_stimuli[stimIndex]));
+          $scope.active_stim._idsAssigned = false;
+          $scope.inventory = [];
+          $scope.stepsRemaining = Infinity;
+          if ($scope.instructions[$scope.inst_id].question_types && !$scope.instructions[$scope.inst_id].show_grid_only) {
+              $scope.tutorial_part = 1;
+              $scope.belief_statements = $scope.instructions[$scope.inst_id].statements;
+              $scope.belief_statement_ids = Array.from(Array($scope.instructions[$scope.inst_id].statements.length).keys());
+          } else {
+              $scope.tutorial_part = 0;
+          }
+          $scope.initializeGridWhenReady();
       }
-      
+
       $scope.reset_response();
       $scope.valid_belief = false;
       $scope.comprehension_response = "";
       $scope.valid_comprehension = false;
       $scope.exam_response = "";
       $scope.valid_exam = false;
-    };
+  };
         
     $scope.advance_stimuli = async function () {
       if ($scope.stim_id == $scope.stimuli_set.length) {
@@ -388,7 +422,8 @@ experimentApp.controller('ExperimentController',
       return $scope.instructions[$scope.inst_id].exam_end == true
     };
     $scope.is_tutorial = function () {
-      return $scope.instructions[$scope.inst_id].tutorial == true
+        if ($scope.section != 'instructions') return false;
+        return $scope.instructions[$scope.inst_id] && $scope.instructions[$scope.inst_id].tutorial == true;
     };
     $scope.hide_questions = function () {
       if ($scope.section == "stimuli") {
@@ -403,6 +438,9 @@ experimentApp.controller('ExperimentController',
         if ($scope.section == "stimuli") {
             return $scope.part_id == 1;
         } else if ($scope.section == "instructions") {
+            if ($scope.is_tutorial() && !$scope.instructions[$scope.inst_id].show_grid_only) {
+                return $scope.tutorial_part == 1;
+            }
             return ($scope.instructions[$scope.inst_id].question_types != null &&
                 $scope.instructions[$scope.inst_id].question_types.includes("beliefs"))
         }
@@ -643,7 +681,7 @@ experimentApp.controller('ExperimentController',
     $scope.tutorial_stimuli = [
       {
         "name": "tutorial1",
-        "maxSteps": 5,
+        "maxSteps": 13,
         "gridSize": [3, 8],
         "trays": [
           { row: 0, col: 5 }
@@ -666,7 +704,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "tutorial2",
         "gridSize": [3, 8],
-        "maxSteps": 7,
+        "maxSteps": 12,
         "trays": [
           { row: 2, col: 0 },
           { row: 0, col: 5 }
@@ -688,12 +726,11 @@ experimentApp.controller('ExperimentController',
       }
     ]
 
-    //TODO: put in all of the stimuli
     $scope.stimuli = [
       {
         "name": "01_1",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 12,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -728,7 +765,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "01_2",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 9,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -763,7 +800,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "01_3",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 22,
         "trays": [
           { row: 0, col: 0 },
           { row: 0, col: 2 },
@@ -803,7 +840,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "02_1",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 9,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -838,7 +875,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "02_2",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 12,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -873,7 +910,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "02_3",
         "gridSize": [7, 7],
-        "maxSteps": 5,
+        "maxSteps": 22,
         "trays": [
           { row: 6, col: 0 },
           { row: 6, col: 2 },
@@ -913,7 +950,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "03_1",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 24,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -952,7 +989,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "03_2",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 15,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -991,7 +1028,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "03_3",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 33,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1035,7 +1072,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "04_1",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 16,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1074,7 +1111,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "04_2",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 32,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1113,7 +1150,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "04_3",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 26,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1157,7 +1194,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "05_1",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 19,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1195,7 +1232,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "05_2",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 27,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1233,7 +1270,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "05_3",
         "gridSize": [8, 7],
-        "maxSteps": 5,
+        "maxSteps": 24,
         "trays": [
           { row: 1, col: 0 },
           { row: 4, col: 6 },
@@ -1276,7 +1313,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "06_1",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 15,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1312,7 +1349,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "06_2",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 10,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1348,7 +1385,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "06_3",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 18,
         "trays": [
           { row: 1, col: 3 },
           { row: 3, col: 5 },
@@ -1389,7 +1426,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "07_1",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 10,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1425,7 +1462,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "07_2",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 9,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1461,7 +1498,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "07_3",
         "gridSize": [6, 6],
-        "maxSteps": 5,
+        "maxSteps": 20,
         "trays": [
           { row: 1, col: 3 },
           { row: 2, col: 0 },
@@ -1502,7 +1539,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "08_1",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1538,7 +1575,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "08_2",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 8,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1574,7 +1611,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "08_3",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 }
@@ -1615,7 +1652,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "09_1",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 8,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1651,7 +1688,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "09_2",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1687,7 +1724,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "09_3",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 6 }
@@ -1728,7 +1765,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "10_1",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1765,7 +1802,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "10_2",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 14,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1802,7 +1839,7 @@ experimentApp.controller('ExperimentController',
       {
         "name": "10_3",
         "gridSize": [6, 7],
-        "maxSteps": 5,
+        "maxSteps": 22,
         "trays": [
           { row: 1, col: 3 },
           { row: 4, col: 0 },
@@ -1859,18 +1896,20 @@ experimentApp.controller('ExperimentController',
     }
 
     $scope.initializeGridWhenReady = function () {
-      var grid = document.getElementById('grid');
-      if (!grid || grid.offsetParent === null) {
-          $timeout(function () { $scope.initializeGridWhenReady(); }, 50);
-      } else {
-          $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity; // MOVE HERE
-          $scope.initializeGrid();
-      }
-      if (!$scope.active_stim._idsAssigned) {
-        $scope.active_stim.doorSquares.forEach((d, i) => d.displayId = i);
-        $scope.active_stim.fruit.forEach((f, i) => { if (f.fruitId === undefined) f.fruitId = i; });
-        $scope.active_stim._idsAssigned = true;
-      }
+        var grid = document.getElementById('grid');
+        if (!grid || grid.offsetParent === null) {
+            $timeout(function () { $scope.initializeGridWhenReady(); }, 50);
+        } else {
+            $timeout(function() {
+                $scope.stepsRemaining = $scope.active_stim.maxSteps !== undefined ? $scope.active_stim.maxSteps : Infinity;
+                $scope.initializeGrid();
+            }, 50);
+        }
+        if (!$scope.active_stim._idsAssigned) {
+            $scope.active_stim.doorSquares.forEach((d, i) => d.displayId = i);
+            $scope.active_stim.fruit.forEach((f, i) => { if (f.fruitId === undefined) f.fruitId = i; });
+            $scope.active_stim._idsAssigned = true;
+        }
     }
 
     // Initialize grid
@@ -1958,8 +1997,11 @@ experimentApp.controller('ExperimentController',
     }
 
     $scope.movePlayer = function (direction) {
-      if ($scope.part_id !== 2 && !$scope.is_tutorial()) return;
-      
+      if ($scope.section == 'stimuli' && $scope.part_id !== 2) return;
+      if ($scope.section == 'instructions') {
+          if ($scope.instructions[$scope.inst_id].show_grid_only) return; // never allow movement on show_grid_only slides
+          if ($scope.tutorial_part !== 2) return; // only allow movement at tutorial_part == 2
+      }
         if ($scope.all_fruits_collected()) return;
         if ($scope.stepsRemaining <= 0) return;
 
